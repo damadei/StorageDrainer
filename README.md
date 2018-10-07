@@ -3,6 +3,9 @@ A tool to migrate object storage data from other platforms (AWS, GCP, etc) to Az
 
 # **Building from Sources**
 To build the project from the sources:
+
+Make sure you have Java 8+, Maven and Git installed and on the path.
+
 1. Clone the project from the sources
     `git clone https://github.com/damadei/StorageDrainer`
 
