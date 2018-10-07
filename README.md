@@ -34,7 +34,9 @@ HDInsight will require extra configuration steps to be able to execute the proje
 
 1. Still in the Custom spark2-defaults find the `spark.executor.cores` and change it to the number of threads you want to execute per Spark container. In our tests the best results were, the number of  cores you have per node - 1.
 
-1. Find also the `spark.executor.instances` and change it to the number of containers you want executing in **each worker node**. In our tests the best result were **3 * # of worker nodes** but you can increase based on your scenario and measure the load in each node.
+1. Find also the `spark.executor.instances` property and change it to the number of containers you want executing in **each worker node**. In our tests the best result were **3 * # of worker nodes** but you can increase based on your scenario and measure the load in each node.
+
+1. Find the `livy.server.csrf_protection.enabled` property and change it to false. If this is an HDInsight you are using for other things, I recommend you change this property back to true after executing the copy as changing it to false may lead to cross-site request forgery security issues so it's best to leave it as true after submiting the jobs. 
 
 1. Remember to restart the cluster when finished by clicking the orange button at the top.
 
@@ -164,7 +166,7 @@ The following items are required to submit a job to perform the inventory:
 - -targetblobcontainer: target container in Azure. If does not exist, will be created
 - -lp: number of partitions to perform the files listing. Recommended value to start with a default HDInsight cluster is 50.
 - -o: output path where to store the results. Recommended to be `wasb:///user-custom/output`
-- -direction: can be **aws-to-azure** or **azure-to-aws**. This determines where the first list is obtained to compare with the other. Generally will should be aws-to-azure to check which files changed or were added in AWS that are not in Azure.
+- -direction: can be **aws-to-azure**, **azure-to-aws** or **azure-to-azure**. This determines where the first list is obtained to compare with the other. Generally will should be aws-to-azure to check which files changed or were added in AWS that are not in Azure.
 
 ### Arguments - Azure to Azure
 ### Mandatory
@@ -174,7 +176,7 @@ The following items are required to submit a job to perform the inventory:
 - -targetblobcontainer: target container in Azure. If it does not exist, will be created
 - -lp: number of partitions to perform the files listing. Recommended value to start with a default HDInsight cluster is 50.
 - -o: output path where to store the results. Recommended to be `wasb:///user-custom/output`
-- -direction: can be **aws-to-azure** or **azure-to-aws**. This determines where the first list is obtained to compare with the other. Generally will should be aws-to-azure to check which files changed or were added in AWS that are not in Azure.
+- -direction: can be **aws-to-azure**, **azure-to-aws**, **azure-to-azure**. This determines where the first list is obtained to compare with the other. Generally will should be aws-to-azure to check which files changed or were added in AWS that are not in Azure.
 
 ### Optional
 - -f: input file containing the virtual directories to copy. The file should be placed in the default storage account associated with the HDinsight Cluster in the default container, preferably in folder /user-custom/input. In this case you refer to it via this parameter as `wasb:///user-custom/input/myInputFile.txt`.
