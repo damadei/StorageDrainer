@@ -1,6 +1,17 @@
 # StorageDrainer
 A tool to migrate object storage data from other platforms (AWS, GCP, etc) to Azure Blob Storage.  Currently supports migrating AWS S3 to Azure Blob Storage in a distributed & scalable fashion, controlled by Apache Spark.
 
+##Key Features and Benefits##
+In summary, these are the main features you will find in StorageDrainer and are the reasons you should use it in your solutions:
+* Parallel inventory & copy leveraging Spark’s capabilities
+* Full or selective migration:
+* Able to specify which folders to copy via a parameters file
+* Resubmit the migration from where it stopped w/o starting from scratch
+* Incremental migration with automatic inventory comparing which files are missing and copying only the delta
+* Inventory reporting producing a file with the differences or reporting the size in # of files or storage consumed
+
+How to use it? Let's see:
+
 # **Building from Sources**
 To build the project from the sources:
 
