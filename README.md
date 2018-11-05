@@ -1,4 +1,3 @@
-![Logo](https://azure.microsoft.com/svghandler/storage-blobs?width=600&height=315)
 # StorageDrainer
 A tool to migrate object storage data from other platforms (AWS, GCP, etc) to Azure Blob Storage.  Currently supports migrating AWS S3 to Azure Blob Storage in a distributed & scalable fashion, controlled by Apache Spark.
 
