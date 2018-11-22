@@ -1,5 +1,6 @@
 package com.microsoft.ocp.storage.drainer;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -12,7 +13,7 @@ import com.microsoft.ocp.storage.drainer.listing.AwsS3Client;
 import com.microsoft.ocp.storage.drainer.listing.AzureBlobStorageClient;
 import com.microsoft.ocp.storage.drainer.listing.AzureBlobStorageClientType;
 
-public class JobDriverBase {
+public class JobDriverBase implements Serializable {
 
 	public static JavaRDD<String> getTopLevelFolders(JavaSparkContext sc, Config config) {
 		if (config.isHasInputFile()) {

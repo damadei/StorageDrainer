@@ -1,6 +1,5 @@
 package com.microsoft.ocp.storage.drainer;
 
-import java.io.FileNotFoundException;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -16,20 +15,19 @@ import com.microsoft.ocp.storage.drainer.config.Config;
 import com.microsoft.ocp.storage.drainer.config.ConfigBuilder;
 import com.microsoft.ocp.storage.drainer.config.ConfigType;
 import com.microsoft.ocp.storage.drainer.config.ParseException;
-import com.microsoft.ocp.storage.drainer.listing.AwsS3Client;
 import com.microsoft.ocp.storage.drainer.listing.AzureBlobStorageClient;
+import com.microsoft.ocp.storage.drainer.listing.AzureBlobStorageClientType;
 import com.microsoft.ocp.storage.drainer.util.MapConversion;
 import com.microsoft.ocp.storage.drainer.util.MapFilter;
-import com.microsoft.ocp.storage.drainer.worker.AwsToAzureCopyWorker;
+import com.microsoft.ocp.storage.drainer.worker.AzureToAzureCopyWorker;
 
 import scala.Tuple2;
 
-public class MigrationJobDriver extends JobDriverBase {
-	private static Logger logger = Logger.getLogger(MigrationJobDriver.class);
+public abstract class AzureToAzureCopyDriverBase extends JobDriverBase {
+	private static Logger logger = Logger.getLogger(AzureToAzureCopyDriverBase.class);
 
-	public static void main(String[] args) throws ParseException, FileNotFoundException {
-
-		SparkConf conf = new SparkConf().setAppName("StorageDrainer-MigrationJob");
+	protected void run(String[] args, String appName) throws ParseException {
+		SparkConf conf = new SparkConf().setAppName(appName);
 
 		if (isLocalEnv()) {
 			conf.setMaster("local");
@@ -37,7 +35,7 @@ public class MigrationJobDriver extends JobDriverBase {
 
 		JavaSparkContext sc = new JavaSparkContext(conf);
 
-		Config config = ConfigBuilder.build(args, ConfigType.MIGRATION);
+		Config config = ConfigBuilder.build(args, ConfigType.AZURE_TO_AZURE_COPY);
 
 		JavaRDD<String> linesRDD = getTopLevelFolders(sc, config);
 
@@ -47,16 +45,18 @@ public class MigrationJobDriver extends JobDriverBase {
 
 			@Override
 			public Iterator<Tuple2<String, Long>> call(String prefix) throws Exception {
-				AwsS3Client amazonListing = new AwsS3Client(config);
-				Map<String, Long> s3objects = amazonListing.listObjects(prefix);
+				AzureBlobStorageClient sourceClient = new AzureBlobStorageClient(config,
+						AzureBlobStorageClientType.SOURCE);
+				Map<String, Long> sourceObjects = sourceClient.listObjects(prefix);
 
-				AzureBlobStorageClient azureBlobListing = new AzureBlobStorageClient(config);
-				Map<String, Long> azureObjects = azureBlobListing.listObjects(prefix);
+				AzureBlobStorageClient targetClient = new AzureBlobStorageClient(config,
+						AzureBlobStorageClientType.TARGET);
+				Map<String, Long> targetObjects = targetClient.listObjects(prefix);
 
-				Map<String, Long> resultMap = MapFilter.filter(s3objects, azureObjects);
+				Map<String, Long> resultMap = filter(sourceObjects, targetObjects);
 
 				logger.info("After filtering, found " + resultMap.size()
-						+ " objects to copy from S3 to Azure for prefix " + prefix);
+						+ " objects to copy from source to target for prefix " + prefix);
 
 				return MapConversion.toTuple2List(resultMap).iterator();
 			}
@@ -64,10 +64,10 @@ public class MigrationJobDriver extends JobDriverBase {
 
 		keysToCopy = keysToCopy.repartition(config.getCopyPartitions());
 
-		AwsToAzureCopyWorker worker = new AwsToAzureCopyWorker(config);
+		AzureToAzureCopyWorker worker = newWorkerInstance(config);
 
 		keysToCopy.foreach(new VoidFunction<Tuple2<String, Long>>() {
-			private static final long serialVersionUID = 7973251674720064937L;
+			private static final long serialVersionUID = 2545000124195992817L;
 
 			@Override
 			public void call(Tuple2<String, Long> fileKey) throws Exception {
@@ -77,6 +77,10 @@ public class MigrationJobDriver extends JobDriverBase {
 
 		sc.close();
 	}
+	
+	protected abstract AzureToAzureCopyWorker newWorkerInstance(Config config);
+
+	protected abstract Map<String, Long> filter(Map<String, Long> source, Map<String, Long> target);
 
 	private static boolean isLocalEnv() {
 		return Config.isLocalEnv();

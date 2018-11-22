@@ -67,5 +67,23 @@ public class TestMapFilter {
 		Map<String, Long> resultMap = MapFilter.filter(src, tgt);
 		assertEquals(resultMap.size(), src.size());
 	}
+
+	@Test
+	public void testByNameOnly() {
+		Map<String, Long> tgt = new HashMap<>(src);
+		tgt.entrySet().stream().forEach(entry -> {
+			entry.setValue(entry.getValue()+1);
+		});
+
+		Map<String, Long> resultMap = MapFilter.filter(src, tgt, true);
+		assertEquals(resultMap.size(), 0);
+	}
 	
+	@Test
+	public void testByNameWithDifferentItems() {
+		Map<String, Long> tgt = new HashMap<>();
+
+		Map<String, Long> resultMap = MapFilter.filter(src, tgt, true);
+		assertEquals(resultMap.size(), 3);
+	}
 }
