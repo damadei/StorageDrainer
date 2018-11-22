@@ -1,9 +1,13 @@
+![Logo](https://azure.microsoft.com/svghandler/storage-blobs?width=600&height=315)
 # StorageDrainer
 A tool to migrate object storage data from other platforms (AWS, GCP, etc) to Azure Blob Storage.  Currently supports migrating AWS S3 to Azure Blob Storage in a distributed & scalable fashion, controlled by Apache Spark.
 
+## What's new in latest version (v1.2)
+* Support for copying from one Azure Storage Account to another while GZipping the files
+
 ## Key Features and Benefits
 In summary, these are the main features you will find in StorageDrainer and are the reasons you should use it in your solutions:
-* Parallel inventory & copy leveraging Sparkâ€™s capabilities
+* Parallel inventory & copy leveraging Spark’s capabilities
 * Full or selective migration:
 * Able to specify which folders to copy via a parameters file
 * Resubmit the migration from where it stopped w/o starting from scratch
@@ -12,7 +16,13 @@ In summary, these are the main features you will find in StorageDrainer and are 
 
 How to use it? Let's see:
 
-# **Building from Sources**
+# **Using pre-built or building from the sources?**
+You have two options to use the Azure Storage Drainer: the pre-compiled version or building from the sources.
+
+# **Using the pre-compiled version**
+Download the pre-compiled latest version [here](https://github.com/damadei/StorageDrainer/blob/master/dist/StorageDrainer-1.2.0-jar-with-dependencies.jar).
+
+# **Building from The Sources**
 To build the project from the sources:
 
 Make sure you have Java 8+, Maven and Git installed and on the path.
@@ -28,7 +38,7 @@ Make sure you have Java 8+, Maven and Git installed and on the path.
 # **Provisioning HDInsight**
 This project was built to be used with Azure HDInsight. When provisioning HDInsight, make sure you:
 
-1. Provision the cluster type as HD Insight v3.6 + Apache Spark v2.2
+1. Provision the cluster type as HD Insight v3.6 + Apache Spark v2.3+
 1. Take note of the cluster login username, password and ssh username
 1. Provision the cluster with an associated storage account. This is where we will place the JAR and text parameters for the service.
 
@@ -89,7 +99,7 @@ The Migration job performs an assessment on the different files and perform the 
 ## Job arguments and configuration
 The following items are required to submit a job to perform a migration
 - **className:** `com.microsoft.ocp.storage.drainer.MigrationJobDriver`
-- **file:** Is the **name of the JAR file of the Storage Drainer tool**. depends on the JAR name & version and folder where the JAR was uploaded to storage. For example, with an **1.1.0 JAR** version and JAR uploaded to the **user-custom/jars** folder this would be `wasb:///user-custom/jars/StorageDrainer-1.1.0-jar-with-dependencies.jar`. The wasb:/// prefix indicates this is in the default Azure Blob Storage account and container.
+- **file:** Is the **name of the JAR file of the Storage Drainer tool**. depends on the JAR name & version and folder where the JAR was uploaded to storage. For example, with an **1.2.0 JAR** version and JAR uploaded to the **user-custom/jars** folder this would be `wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar`. The wasb:/// prefix indicates this is in the default Azure Blob Storage account and container.
 
 ### Arguments
 ### Mandatory
@@ -109,7 +119,7 @@ The following items are required to submit a job to perform a migration
 <pre>
 {
 	"className": "com.microsoft.ocp.storage.drainer.MigrationJobDriver",
-	"file": "wasb:///user-custom/jars/StorageDrainer-1.1.0-jar-with-dependencies.jar",
+	"file": "wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar",
 	"args": [
 		"-s3bucket", "sourceBucketName",
 		"-awsaccid", "AAAAAAAAAAAAAAAAA",
@@ -131,7 +141,7 @@ The Azure to Azure copy copies the files from different Azure storage accounts o
 ## Job arguments and configuration
 The following items are required to submit a job to perform a copy from Azure to Azure:
 - **className:** `com.microsoft.ocp.storage.drainer.AzureToAzureCopyDriver`
-- **file:** Is the **name of the JAR file of the Storage Drainer tool**. depends on the JAR name & version and folder where the JAR was uploaded to storage. For example, with an **1.1.0 JAR** version and JAR uploaded to the **user-custom/jars** folder this would be `wasb:///user-custom/jars/StorageDrainer-1.1.0-jar-with-dependencies.jar`. The wasb:/// prefix indicates this is in the default Azure Blob Storage container.
+- **file:** Is the **name of the JAR file of the Storage Drainer tool**. depends on the JAR name & version and folder where the JAR was uploaded to storage. For example, with an **1.2.0 JAR** version and JAR uploaded to the **user-custom/jars** folder this would be `wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar`. The wasb:/// prefix indicates this is in the default Azure Blob Storage container.
 
 ### Arguments
 ### Mandatory
@@ -149,7 +159,44 @@ The following items are required to submit a job to perform a copy from Azure to
 <pre>
 {
 	"className": "com.microsoft.ocp.storage.drainer.AzureToAzureCopyDriver",
-	"file": "wasb:///user-custom/jars/StorageDrainer-1.1.0-jar-with-dependencies.jar",
+	"file": "wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar",
+	"args": [
+		 "-sourceazkey", "DefaultEndpointsProtocol=https;AccountName=xxxxsource;AccountKey=12345XZXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX==;EndpointSuffix=core.windows.net",
+		 "-sourceblobcontainer" "sourcecontainername",
+		 "-targetazkey", "DefaultEndpointsProtocol=https;AccountName=xxxxtarget;AccountKey=12345XZXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX==;EndpointSuffix=core.windows.net",
+		 "-targetblobcontainer", "targetcontainername",
+		 "-lp", "50",
+		 "-cp", "200"
+    ]
+}
+</pre>
+
+
+# **Azure to Azure Copy with Compression (GZipping)**
+The Azure to Azure copy with GZip support copies the files from different Azure storage accounts or to different containers in the same account while gzipping the results and marking the file encoding as gzip.
+
+## Job arguments and configuration
+The following items are required to submit a job to perform a copy from Azure to Azure:
+- **className:** `com.microsoft.ocp.storage.drainer.AzureToAzureGZipDriver`
+- **file:** Is the **name of the JAR file of the Storage Drainer tool**. depends on the JAR name & version and folder where the JAR was uploaded to storage. For example, with an **1.2.0 JAR** version and JAR uploaded to the **user-custom/jars** folder this would be `wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar`. The wasb:/// prefix indicates this is in the default Azure Blob Storage container.
+
+### Arguments
+### Mandatory
+- -sourceazkey: Source Azure Storage account key.
+- -sourceblobcontainer: Source container name in Azure. 
+- -targetazkey: Target Azure Storage account key. If copying to a different container in the same account, just repeat the same key used as sourceazkey.
+- -targetblobcontainer: Target container in Azure. If it does not exist, will be created.
+- -lp: number of partitions to perform the files listing. Recommended value to start with a default HDInsight cluster is 50.
+- -cp: number of copy partitons to perform the copy. Recommended value to start with a default HDInsight cluster is 200.
+
+### Optional
+- -f: input file containing the virtual directories to copy. The file should be placed in the default storage account associated with the HDInsight Cluster in the default container, preferably in folder /user-custom/input. In this case you refer to it via this parameter as `wasb:///user-custom/input/myInputFile.txt`.
+
+### Sample
+<pre>
+{
+	"className": "com.microsoft.ocp.storage.drainer.AzureToAzureGZipDriver",
+	"file": "wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar",
 	"args": [
 		 "-sourceazkey", "DefaultEndpointsProtocol=https;AccountName=xxxxsource;AccountKey=12345XZXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX==;EndpointSuffix=core.windows.net",
 		 "-sourceblobcontainer" "sourcecontainername",
@@ -168,7 +215,7 @@ The Inventory job performs an assessment on the different files between the sour
 ## Job arguments and configuration
 The following items are required to submit a job to perform the inventory:
 - **className**: com.microsoft.ocp.storage.drainer.InventoryJobDriver
-- **file:** Is the **name of the JAR file of the Storage Drainer tool**. depends on the JAR name & version and folder where the JAR was uploaded to storage. For example, with an **1.1.0 JAR** version and JAR uploaded to the **user-custom/jars** folder this would be `wasb:///user-custom/jars/StorageDrainer-1.1.0-jar-with-dependencies.jar`. The wasb:/// prefix indicates this is in the default Azure Blob Storage container.
+- **file:** Is the **name of the JAR file of the Storage Drainer tool**. depends on the JAR name & version and folder where the JAR was uploaded to storage. For example, with an **1.2.0 JAR** version and JAR uploaded to the **user-custom/jars** folder this would be `wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar`. The wasb:/// prefix indicates this is in the default Azure Blob Storage container.
 
 ### Arguments - AWS to Azure and Azure to AWS
 ### Mandatory
@@ -199,7 +246,7 @@ The following items are required to submit a job to perform the inventory:
 <pre>
 {
 	"className": "com.microsoft.ocp.storage.drainer.InventoryJobDriver",
-	"file": "wasb:///user-custom/jars/StorageDrainer-1.1.0-jar-with-dependencies.jar",
+	"file": "wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar",
 	"args": [
 		"-s3bucket", "yourSourceBucket",
 		"-awsaccid", "AAAAAAAAAAAAAAAAA",
@@ -221,7 +268,7 @@ This job performs an assessment and calculates the total number of files and tot
 ## Job arguments and configuration
 The following items are required to submit an AWS Sizing job:
 - **className**: com.microsoft.ocp.storage.drainer.AwsSizingJobDriver
-- **file:** Is the **name of the JAR file of the Storage Drainer tool**. depends on the JAR name & version and folder where the JAR was uploaded to storage. For example, with an **1.1.0 JAR** version and JAR uploaded to the **user-custom/jars** folder this would be `wasb:///user-custom/jars/StorageDrainer-1.1.0-jar-with-dependencies.jar`. The wasb:/// prefix indicates this is in the default Azure Blob Storage container.
+- **file:** Is the **name of the JAR file of the Storage Drainer tool**. depends on the JAR name & version and folder where the JAR was uploaded to storage. For example, with an **1.2.0 JAR** version and JAR uploaded to the **user-custom/jars** folder this would be `wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar`. The wasb:/// prefix indicates this is in the default Azure Blob Storage container.
 
 ### Arguments
 ### Mandatory
@@ -238,7 +285,7 @@ The following items are required to submit an AWS Sizing job:
 <pre>
 {
 	"className": "com.microsoft.ocp.storage.drainer.AwsSizingJobDriver",
-	"file": "wasb:///user-custom/jars/StorageDrainer-1.0.0-jar-with-dependencies.jar",
+	"file": "wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar",
 	"args": [
 		"-s3bucket", "bucketname",
 		"-awsaccid", "AAAAAAAAAAAAAAAAA",
@@ -268,7 +315,7 @@ This job performs an assessment and calculates the total number of files and tot
 ## Job arguments and configuration
 The following items are required to submit a job to perform an Azure Sizing
 - **className**: com.microsoft.ocp.storage.drainer.AzureSizingJobDriver
-- **file:** Is the **name of the JAR file of the Storage Drainer tool**. depends on the JAR name & version and folder where the JAR was uploaded to storage. For example, with an **1.1.0 JAR** version and JAR uploaded to the **user-custom/jars** folder this would be `wasb:///user-custom/jars/StorageDrainer-1.1.0-jar-with-dependencies.jar`. The wasb:/// prefix indicates this is in the default Azure Blob Storage container.
+- **file:** Is the **name of the JAR file of the Storage Drainer tool**. depends on the JAR name & version and folder where the JAR was uploaded to storage. For example, with an **1.2.0 JAR** version and JAR uploaded to the **user-custom/jars** folder this would be `wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar`. The wasb:/// prefix indicates this is in the default Azure Blob Storage container.
 
 ### Arguments
 ### Mandatory
@@ -283,7 +330,7 @@ The following items are required to submit a job to perform an Azure Sizing
 <pre>
 {
 	"className": "com.microsoft.ocp.storage.drainer.AzureSizingJobDriver",
-	"file": "wasb:///user-custom/jars/StorageDrainer-1.0.0-jar-with-dependencies.jar",
+	"file": "wasb:///user-custom/jars/StorageDrainer-1.2.0-jar-with-dependencies.jar",
 	"args": [
 		"-targetazkey", "DefaultEndpointsProtocol=https;AccountName=xxxxx;AccountKey=XXXXAAAA111111AAAAAAAAAAAAAA==;EndpointSuffix=core.windows.net",
 		"-targetblobcontainer", "mycontainer",
