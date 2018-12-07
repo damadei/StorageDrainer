@@ -16,14 +16,8 @@ In summary, these are the main features you will find in StorageDrainer and are 
 
 How to use it? Let's see:
 
-# **Using pre-built or building from the sources?**
-You have two options to use the Azure Storage Drainer: the pre-compiled version or building from the sources.
-
-# **Using the pre-compiled version**
-Download the pre-compiled latest version [here](https://github.com/damadei/StorageDrainer/blob/master/dist/StorageDrainer-1.2.0-jar-with-dependencies.jar).
-
-# **Building from The Sources**
-To build the project from the sources:
+# **Using the tool by building from the source**
+To build the project from the sources and generate its JAR file:
 
 Make sure you have Java 8+, Maven and Git installed and on the path.
 
